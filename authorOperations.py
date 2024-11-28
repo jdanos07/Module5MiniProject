@@ -1,4 +1,4 @@
-      
+import mysqlConnect as mc     
 
 class Author:
     def __init__(self, author_name, author_bio):
@@ -20,6 +20,26 @@ class Author:
     def display(self):    
         print(f'{self._author_name}\' biography: {self._author_bio}.')
 
+def author_table(name, bio):
+    connection = mc.connect_database()
+    if connection is not None:
+        try:
+            cursor = connection.cursor()
+
+            author_data = (id, name, bio)
+
+            query = 'INSERT INTO authors (name, biography) VALUES (%s, %s)'
+
+            cursor.execute(query, (name, bio))
+            connection.commit()
+            print('Author information added.')
+        
+        except mc.Error as e:
+            print(f'Error: {e}')
+        finally:
+            cursor.close()
+            connection.close()
+            print('Connection closed')
 authors= {}
 
 def new_author(authors):
@@ -27,6 +47,7 @@ def new_author(authors):
     author_bio = input('Author\'s Biography: ')
     authors[author_name] = Author(author_name, author_bio)
     print(f'{author_name} and his biography have been added to the database.')
+    author_table(author_name, author_bio)
 
 def author_details():
     author_detailed = input('Input Author\'s name: ')
@@ -58,3 +79,5 @@ def au_main():
 
         else:
             print('Invalid selection. Please enter either the number \"1\" or the text \"Book Operations\".')
+
+au_main()
