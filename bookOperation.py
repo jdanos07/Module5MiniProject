@@ -1,6 +1,7 @@
 import re
 import userOperations as uo
 import authorOperations as au
+import mysqlConnect as mc
 
 class Book_Operations:
     def __init__(self, id_code, title, author, genre, publication_date, available=True):
@@ -36,7 +37,26 @@ class Book_Operations:
         availability = 'Available' if self.__available else "Checked Out"
         print(f'{self.__id_code}: {self.__title}, {self.__author}, {self.__genre}, {self.__publication_date}, {availability}')
 
+def books_table(name, bio):
+    connection = mc.connect_database()
+    if connection is not None:
+        try:
+            cursor = connection.cursor()
 
+            author_data = ()
+
+            query = 'INSERT INTO authors (name, biography) VALUES (%s, %s)'
+
+            cursor.execute(query, (name, bio))
+            connection.commit()
+            print('Author information added.')
+        
+        except mc.Error as e:
+            print(f'Error: {e}')
+        finally:
+            cursor.close()
+            connection.close()
+            print('Connection closed')
 
 library = {
     '001': Book_Operations('001', '1984', 'George Orwell', 'Dystopian', '06/1949')

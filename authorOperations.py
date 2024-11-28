@@ -26,8 +26,6 @@ def author_table(name, bio):
         try:
             cursor = connection.cursor()
 
-            author_data = (id, name, bio)
-
             query = 'INSERT INTO authors (name, biography) VALUES (%s, %s)'
 
             cursor.execute(query, (name, bio))
