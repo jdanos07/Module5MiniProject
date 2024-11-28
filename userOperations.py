@@ -1,3 +1,5 @@
+import mysqlConnect as mc
+
 class User:
     def __init__(self, name, user_id, borrowed_books=None):
        self.__name = name
@@ -19,6 +21,24 @@ class User:
     def display_details(self):
         print(f'{self.__user_id} has borrowed {self._borrowed_books}')
     
+def user_table(user_name, user_id):
+    connection = mc.connect_database()
+    if connection is not None:
+        try:
+            cursor = connection.cursor()
+
+            query = 'INSERT INTO users (user_name, user_id) VALUES (%s, %s)'
+
+            cursor.execute(query, (user_name, user_id))
+            connection.commit()                
+            print('User information added.')
+            
+        except mc.Error as e:
+                print(f'Error: {e}')
+        finally:
+            cursor.close()
+            connection.close()
+            print('Connection closed')
 
 users = {}
 
@@ -27,6 +47,7 @@ def new_user(users):
     user_id = f'{len(users) + 1:03d}'
     users[user_id] = User(user_name, user_id)
     print(f'User ID {user_id} assigned to {user_name}.')
+    user_table(user_name, user_id)
 
 def display_users():
     for user in users.values():

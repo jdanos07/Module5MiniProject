@@ -1,4 +1,5 @@
-import mysqlConnect as mc     
+import mysqlConnect as mc
+
 
 class Author:
     def __init__(self, author_name, author_bio):
@@ -38,14 +39,19 @@ def author_table(name, bio):
             cursor.close()
             connection.close()
             print('Connection closed')
+            
 authors= {}
 
 def new_author(authors):
+    from bookOperation import library
     author_name = input('Author\'s Name: ').title()
-    author_bio = input('Author\'s Biography: ')
-    authors[author_name] = Author(author_name, author_bio)
-    print(f'{author_name} and his biography have been added to the database.')
-    author_table(author_name, author_bio)
+    if author_name in library.values():
+        author_bio = input('Author\'s Biography: ')
+        authors[author_name] = Author(author_name, author_bio)
+        print(f'{author_name} and biography have been added to the database.')
+        author_table(author_name, author_bio)
+    else:  
+        print('Add a book written by this author to the library first.')
 
 def author_details():
     author_detailed = input('Input Author\'s name: ')
@@ -61,7 +67,7 @@ def display_authors():
 def au_main():
     print('Author Operations: ')
     while True:
-        print('\n    1. Add New\n    2. View Details\n    3. Display All\n    4. Back to Main')
+        print('\n    1. Add New\n    2. View Details\n    3. Display All\n    4. Back to Main \n')
         au_input = input('Menu Selection (Number or Menu Title): ').lower()
        
         if au_input == '4' or au_input == 'back to main':
@@ -77,5 +83,3 @@ def au_main():
 
         else:
             print('Invalid selection. Please enter either the number \"1\" or the text \"Book Operations\".')
-
-au_main()

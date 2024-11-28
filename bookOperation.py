@@ -1,6 +1,5 @@
 import re
 import userOperations as uo
-import authorOperations as au
 import mysqlConnect as mc
 
 class Book_Operations:
@@ -37,19 +36,17 @@ class Book_Operations:
         availability = 'Available' if self.__available else "Checked Out"
         print(f'{self.__id_code}: {self.__title}, {self.__author}, {self.__genre}, {self.__publication_date}, {availability}')
 
-def books_table(name, bio):
+def books_table(title, author, genre, publication_date, available):
     connection = mc.connect_database()
     if connection is not None:
         try:
             cursor = connection.cursor()
+            
+            query = 'INSERT INTO books (title, book_author, genre, publication_date, availability) VALUES (%s, %s, %s, %s, %s)'
 
-            author_data = ()
-
-            query = 'INSERT INTO authors (name, biography) VALUES (%s, %s)'
-
-            cursor.execute(query, (name, bio))
+            cursor.execute(query, (title, author, genre, publication_date, available))
             connection.commit()
-            print('Author information added.')
+            print('Book information added.')
         
         except mc.Error as e:
             print(f'Error: {e}')
@@ -58,15 +55,56 @@ def books_table(name, bio):
             connection.close()
             print('Connection closed')
 
+def borrow_table(user_id, book_id, borrow_date, return_date):
+    connection = mc.connect_database()
+    if connection is not None:
+        try:
+            cursor = connection.cursor()
+
+            query = 'INSERT INTO borrowed_books (user_id, book_id, borrow_date, return_date) VALUES (%s, %s, %s, %s, %s)'
+
+            cursor.execute(query, (user_id, book_id, borrow_date, return_date))
+            connection.commit()
+            print('Borrowed book details recorded.')
+        
+        except mc.Error as e:
+            print(f'Error: {e}')
+
+        finally:
+            cursor.close()
+            connection.close()
+            print('Connection closed')
+
+def borrowed_return(return_date, returner_id):
+    connection = mc.connect_database()
+    if connection is not None:
+        try:
+            cursor = connection.cursor()
+
+            query = 'UPDATE borrowed_books SET return_date = %s where ID = %s'
+
+            cursor.execute(query, (return_date, returner_id))
+            connection.commit()
+            print('Borrowed book returned')
+        
+        except mc.Error as e:
+            print(f'Error: {e}')
+
+        finally:
+            cursor.close()
+            connection.close()
+            print('Connection closed')
+            
 library = {
     '001': Book_Operations('001', '1984', 'George Orwell', 'Dystopian', '06/1949')
     }
 
 def new_book(library):
+    import authorOperations as au
     id_code = f'{len(library) + 1:03d}'
     title = input('Title: ')
     author = input('Author: ')
-    au.Author(author)
+    au.Author(author, author_bio=0)
     genre = input('Genre: ')
     while True:
         publication_date = input('Publication Date (mm/yyyy): ')
@@ -75,7 +113,8 @@ def new_book(library):
         else: 
             print('Invalid format. Use mm/yyyy formatting.')
     available = True
-    library[id_code] = Book_Operations(id_code, title, author, genre, publication_date, available)    
+    library[id_code] = Book_Operations(id_code, title, author, genre, publication_date, available)
+    books_table(title, author, genre, publication_date, available)   
 
 def date_format(publication_date):
     format = r'^\d{1,2}/\d{4}$'
@@ -112,6 +151,7 @@ def search_books():
                 print('A book with this Author does not exist.\nPlease try again.')
 
 def borrow_book():
+    from datetime import date
     display_library()
     registered_borrower = input('Input User ID: ')
     
@@ -124,13 +164,15 @@ def borrow_book():
             if book.get_available():
                 book.set_available(False)    
                 user.get_borrowed_books().append(book_to_borrow)
-                print(f'{book.get_title()} has been checked out.')  
+                print(f'{book.get_title()} has been checked out.')
+                borrow_table(registered_borrower,book_to_borrow, date.today() ,None)  
         else:
                 print({f'"{book.get_title()}" is not available to be checked out.'})
     else:
         print('Users are required to register for a "User ID" before borrowing from the library.\nPlease proceed to "User Operations" to register.')
 
 def return_book(): 
+    from datetime import date
     returner = input('Input User ID: ')
     if returner in uo.users:   
         book_to_return = input('Book ID to return: ')
@@ -143,6 +185,7 @@ def return_book():
                     book.set_available(True)
                     print(f'"{book.get_title()}" has been returned.')
                     user.get_borrowed_books().remove(book_to_return)
+                    book_to_return(date.today(), returner)
                 else:
                     print(f'"{book.get_title()}" has not been checked out.')
             else:
@@ -179,3 +222,4 @@ def bo_main(library):
         
         else:
             print('Invalid selection. Please enter either the number \"1\" or the text \"Book Operations\".')
+
